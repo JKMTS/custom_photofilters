@@ -155,6 +155,9 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
                           width: double.infinity,
                           height: double.infinity,
                           padding: EdgeInsets.all(12.0),
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.all(Radius.circular(18))
+                          ),
                           child: _buildFilteredImage(
                             _filter,
                             originalImage ?? image,
