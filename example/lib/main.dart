@@ -1,3 +1,5 @@
+// ignore_for_file: sdk_version_ui_as_code
+
 import 'dart:async';
 import 'dart:io';
 
@@ -18,35 +20,21 @@ class _MyAppState extends State<MyApp> {
   String fileName;
   List<Filter> filters = presetFiltersList;
   final picker = ImagePicker();
+  List<File> imageFiles = [];
   File imageFile;
+  List<imageLib.Image> originalImages = [];
+  List<Filter> selectedFilters = [];
 
   Future getImage(context) async {
     final pickedFile = await picker.getImage(source: ImageSource.gallery);
-    if(pickedFile!=null){
-    imageFile = new File(pickedFile.path);
-    fileName = basename(imageFile.path);
-    var image = imageLib.decodeImage(await imageFile.readAsBytes());
-    image = imageLib.copyResize(image, width: 600);
-    Map imagefile = await Navigator.push(
-      context,
-      new MaterialPageRoute(
-        builder: (context) => new PhotoFilterSelector(
-          title: Text("Photo Filter Example"),
-          image: image,
-          filters: presetFiltersList,
-          filename: fileName,
-          loader: Center(child: CircularProgressIndicator()),
-          fit: BoxFit.contain,
-        ),
-      ),
-    );
-    
-    if (imagefile != null && imagefile.containsKey('image_filtered')) {
-      setState(() {
-        imageFile = imagefile['image_filtered'];
+    if (pickedFile != null) {
+      imageFiles.add(File(pickedFile.path));
+      imageFiles.forEach((element) async {
+        var image = imageLib.decodeImage(await element.readAsBytes());
+        originalImages.add(image);
+        selectedFilters.add(presetFiltersList[0]);
       });
-      print(imageFile.path);
-    }
+      setState(() {});
     }
   }
 
@@ -58,11 +46,57 @@ class _MyAppState extends State<MyApp> {
       ),
       body: Center(
         child: new Container(
-          child: imageFile == null
+          child: imageFiles.isEmpty
               ? Center(
                   child: new Text('No image selected.'),
                 )
-              : Image.file(new File(imageFile.path)),
+              : SingleChildScrollView(
+                  child: Column(
+                    children: [
+                      ...List.generate(
+                          imageFiles.length,
+                          (index) => GestureDetector(
+                              onTap: () async {
+                                setState(() {
+                                  imageFile = null;
+                                });
+                                imageFile = new File(imageFiles[index].path);
+                                fileName = basename(imageFile.path);
+                                var image = imageLib
+                                    .decodeImage(await imageFile.readAsBytes());
+                                Map imagefile = await Navigator.push(
+                                  context,
+                                  new MaterialPageRoute(
+                                    builder: (context) =>
+                                        new PhotoFilterSelector(
+                                      title: Text("Photo Filter Example"),
+                                      image: image,
+                                      filters: presetFiltersList,
+                                      filename: fileName,
+                                      loader: Center(
+                                          child: CircularProgressIndicator()),
+                                      fit: BoxFit.contain,
+                                      originalImage: originalImages[index],
+                                      imageFilter: selectedFilters[index],
+                                    ),
+                                  ),
+                                );
+                                if (imagefile != null &&
+                                    imagefile.containsKey('image_filtered')) {
+                                  debugPrint("inside the condition");
+                                  setState(() {
+                                    imageFiles[index] =
+                                        imagefile['image_filtered'];
+                                    selectedFilters[index] =
+                                        imagefile["filter"];
+                                  });
+                                  print(imageFile.path);
+                                }
+                              },
+                              child: Image.file(File(imageFiles[index].path))))
+                    ],
+                  ),
+                ),
         ),
       ),
       floatingActionButton: new FloatingActionButton(
