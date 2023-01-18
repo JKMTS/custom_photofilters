@@ -24,6 +24,7 @@ class _MyAppState extends State<MyApp> {
   File imageFile;
   List<imageLib.Image> originalImages = [];
   List<Filter> selectedFilters = [];
+  List<bool> isBasicEdit = [];
 
   Future getImage(context) async {
     final pickedFile = await picker.getImage(source: ImageSource.gallery);
@@ -33,6 +34,7 @@ class _MyAppState extends State<MyApp> {
         var image = imageLib.decodeImage(await element.readAsBytes());
         originalImages.add(image);
         selectedFilters.add(presetFiltersList[0]);
+        isBasicEdit.add(false);
       });
       setState(() {});
     }
@@ -76,7 +78,9 @@ class _MyAppState extends State<MyApp> {
                                       loader: Center(
                                           child: CircularProgressIndicator()),
                                       fit: BoxFit.contain,
-                                      originalImage: originalImages[index],
+                                      originalImage: isBasicEdit[index]
+                                          ? image
+                                          : originalImages[index],
                                       imageFilter: selectedFilters[index],
                                     ),
                                   ),
@@ -89,6 +93,8 @@ class _MyAppState extends State<MyApp> {
                                         imagefile['image_filtered'];
                                     selectedFilters[index] =
                                         imagefile["filter"];
+                                    isBasicEdit[index] =
+                                        imagefile["is_basic_edit"];
                                   });
                                   print(imageFile.path);
                                 }
