@@ -225,16 +225,16 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
                                 if (lastSelectedfilter != null) {
                                   _filter = lastSelectedfilter;
                                 }
-                                if(lastBrightnessValue != null){
+                                if (lastBrightnessValue != null) {
                                   brightnessSliderValue = lastBrightnessValue!;
                                 }
-                                if(lastHueValue != null){
+                                if (lastHueValue != null) {
                                   hueSliderValue = lastHueValue!;
                                 }
-                                if(lastSaturationValue != null){
+                                if (lastSaturationValue != null) {
                                   saturationSliderValue = lastSaturationValue!;
                                 }
-                                if(lastContrastValue != null){
+                                if (lastContrastValue != null) {
                                   contrastSliderValue = lastContrastValue!;
                                 }
                               });
@@ -259,6 +259,7 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
                               (index) => BottomTabWidgets(
                                 title: bottomTabs[index].title,
                                 isSelected: bottomTabs[index].isSelected,
+                                selectedColor: widget.appBarColor,
                                 onTap: () {
                                   setState(() {
                                     bottomTabs.forEach((element) {
