@@ -607,7 +607,7 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
                     )
                   : Image.memory(
                       snapshot.data as dynamic,
-                      fit: BoxFit.contain,
+                      fit: widget.fit,
                     );
           }
           // unreachable
