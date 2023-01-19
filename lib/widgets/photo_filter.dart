@@ -115,7 +115,7 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
   double? lastHueValue;
   double? lastSaturationValue;
   double? lastContrastValue;
-  bool isLoading = false;
+
   List<BasicToolItemData> basicTools = [
     BasicToolItemData(title: 'Reset', iconData: Icons.refresh_sharp),
     BasicToolItemData(
@@ -281,9 +281,6 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
                             ? ListView.builder(
                                 scrollDirection: Axis.horizontal,
                                 itemCount: widget.filters.length,
-                                physics: isLoading
-                                    ? NeverScrollableScrollPhysics()
-                                    : ScrollPhysics(),
                                 itemBuilder: (BuildContext context, int index) {
                                   return InkWell(
                                     child: Container(
@@ -491,9 +488,6 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
             case ConnectionState.none:
             case ConnectionState.active:
             case ConnectionState.waiting:
-              setState(() {
-                isLoading = true;
-              });
               return CircleAvatar(
                 radius: 50.0,
                 child: Center(
