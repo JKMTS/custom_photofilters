@@ -8,6 +8,8 @@ import 'package:path/path.dart';
 import 'package:photofilters/photofilters.dart';
 import 'package:image/image.dart' as imageLib;
 import 'package:image_picker/image_picker.dart';
+import 'package:photofilters_example/widgets/custom_image_picker/picker_result_screen.dart';
+import 'package:photofilters_example/widgets/custom_image_picker/src/assets_picker.dart';
 
 void main() => runApp(new MaterialApp(home: MyApp()));
 
@@ -17,11 +19,11 @@ class MyApp extends StatefulWidget {
 }
 
 class _MyAppState extends State<MyApp> {
-  String fileName;
+  String? fileName;
   List<Filter> filters = presetFiltersList;
   final picker = ImagePicker();
   List<File> imageFiles = [];
-  File imageFile;
+  File? imageFile;
   List<imageLib.Image> originalImages = [];
   List<Filter> selectedFilters = [];
   List<bool> isBasicEdit = [];
@@ -32,7 +34,7 @@ class _MyAppState extends State<MyApp> {
       imageFiles.add(File(pickedFile.path));
       imageFiles.forEach((element) async {
         var image = imageLib.decodeImage(await element.readAsBytes());
-        originalImages.add(image);
+        originalImages.add(image!);
         selectedFilters.add(presetFiltersList[0]);
         isBasicEdit.add(false);
       });
@@ -63,18 +65,18 @@ class _MyAppState extends State<MyApp> {
                                   imageFile = null;
                                 });
                                 imageFile = new File(imageFiles[index].path);
-                                fileName = basename(imageFile.path);
-                                var image = imageLib
-                                    .decodeImage(await imageFile.readAsBytes());
+                                fileName = basename(imageFile!.path);
+                                var image = imageLib.decodeImage(
+                                    await imageFile!.readAsBytes());
                                 Map imagefile = await Navigator.push(
                                   context,
                                   new MaterialPageRoute(
                                     builder: (context) =>
                                         new PhotoFilterSelector(
                                       title: Text("Photo Filter Example"),
-                                      image: image,
+                                      image: image!,
                                       filters: presetFiltersList,
-                                      filename: fileName,
+                                      filename: fileName!,
                                       loader: Center(
                                           child: CircularProgressIndicator()),
                                       fit: BoxFit.contain,
@@ -96,7 +98,7 @@ class _MyAppState extends State<MyApp> {
                                     isBasicEdit[index] =
                                         imagefile["is_basic_edit"];
                                   });
-                                  print(imageFile.path);
+                                  print(imageFile!.path);
                                 }
                               },
                               child: Image.file(File(imageFiles[index].path))))
@@ -105,8 +107,28 @@ class _MyAppState extends State<MyApp> {
                 ),
         ),
       ),
-      floatingActionButton: new FloatingActionButton(
-        onPressed: () => getImage(context),
+      floatingActionButton: FloatingActionButton(
+        onPressed: () async {
+          await InstaAssetPicker.pickAssets(
+            context,
+            title: 'Select images',
+            maxAssets: 10,
+            cropEnabled: true,
+            onCompleted: (cropStream) async {
+              List<File>? files = await Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => PickerCropResultScreen(
+                            cropStream: cropStream,
+                          )));
+              // Get.back();
+              // if (croppedFiles != null) {
+              //   pickedFiles = croppedFiles.map((e) => e).toList();
+              //   notifyListeners();
+              // }
+            },
+          );
+        },
         tooltip: 'Pick Image',
         child: new Icon(Icons.add_a_photo),
       ),

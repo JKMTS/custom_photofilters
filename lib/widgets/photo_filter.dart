@@ -1,22 +1,13 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:io';
-import 'dart:math' as math;
 import 'package:colorfilter_generator/addons.dart';
-import 'package:colorfilter_generator/colorfilter_generator.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:image/image.dart' as imageLib;
 import 'package:path_provider/path_provider.dart';
 import 'package:photofilters/filters/filters.dart';
-import 'package:photofilters/filters/image_filters.dart';
-import 'package:photofilters/filters/preset_filters.dart';
-import 'package:photofilters/filters/subfilters.dart';
-import 'package:photofilters/utils/image_filter_utils.dart'
-    as image_filter_utils;
 import 'dart:ui' as ui;
-
 import 'package:photofilters/widgets/basic_tool_item.dart';
 
 class PhotoFilter extends StatelessWidget {
@@ -111,11 +102,12 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
   double hueSliderValue = 0.0;
   double saturationSliderValue = 0.0;
   double contrastSliderValue = 0.0;
+  double sepiaSliderValue = 0.0;
   double? lastBrightnessValue;
   double? lastHueValue;
   double? lastSaturationValue;
   double? lastContrastValue;
-
+  double? lastSepiaValue;
   List<BasicToolItemData> basicTools = [
     BasicToolItemData(title: 'Reset', iconData: Icons.refresh_sharp),
     BasicToolItemData(
@@ -131,6 +123,10 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
     BasicToolItemData(
       title: 'Contrast',
       iconData: Icons.contrast_sharp,
+    ),
+    BasicToolItemData(
+      title: 'Sepia',
+      iconData: Icons.imagesearch_roller_outlined,
     )
   ];
   BasicToolItemData? selectedBasicTool;
@@ -172,9 +168,8 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
                         RenderRepaintBoundary repaintBoundary =
                             globalKey.currentContext!.findRenderObject()
                                 as RenderRepaintBoundary;
-                        // repaintBoundary.size.
-                        ui.Image boxImage =
-                            await repaintBoundary.toImage(pixelRatio: 3);
+                        ui.Image boxImage = await repaintBoundary.toImage(
+                            pixelRatio:3.0);
                         ByteData? byteData = await boxImage.toByteData(
                             format: ui.ImageByteFormat.png);
                         Uint8List uint8list = byteData!.buffer.asUint8List();
@@ -201,167 +196,185 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
           height: double.infinity,
           child: loading
               ? widget.loader
-              : Column(
-                  mainAxisSize: MainAxisSize.max,
+              : SingleChildScrollView(
+                child: Column(
                   children: [
-                    Expanded(
-                      flex: 6,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.all(Radius.circular(25)),
-                        child: Padding(
-                          padding: EdgeInsets.all(10),
-                          child: GestureDetector(
-                            onTapDown: (details) {
-                              setState(() {
-                                _filter = widget.filters[0];
-                                brightnessSliderValue = 0.0;
-                                hueSliderValue = 0.0;
-                                contrastSliderValue = 0.0;
-                                saturationSliderValue = 0.0;
-                              });
-                            },
-                            onTapUp: (details) {
-                              setState(() {
-                                if (lastSelectedfilter != null) {
-                                  _filter = lastSelectedfilter;
-                                }
-                                if (lastBrightnessValue != null) {
-                                  brightnessSliderValue = lastBrightnessValue!;
-                                }
-                                if (lastHueValue != null) {
-                                  hueSliderValue = lastHueValue!;
-                                }
-                                if (lastSaturationValue != null) {
-                                  saturationSliderValue = lastSaturationValue!;
-                                }
-                                if (lastContrastValue != null) {
-                                  contrastSliderValue = lastContrastValue!;
-                                }
-                              });
-                            },
-                            child: _buildFilteredImage(
-                                _filter,
-                                originalImage ?? image,
-                                filename,
-                                brightnessSliderValue),
-                          ),
+                    ClipRRect(
+                      borderRadius: BorderRadius.all(Radius.circular(25)),
+                      child: Padding(
+                        padding: EdgeInsets.all(10),
+                        child: GestureDetector(
+                          onTapDown: (details) {
+                            setState(() {
+                              _filter = widget.filters[0];
+                              brightnessSliderValue = 0.0;
+                              hueSliderValue = 0.0;
+                              contrastSliderValue = 0.0;
+                              saturationSliderValue = 0.0;
+                              sepiaSliderValue = 0.0;
+                            });
+                          },
+                          onTapUp: (details) {
+                            setState(() {
+                              if (lastSelectedfilter != null) {
+                                _filter = lastSelectedfilter;
+                              }
+                              if (lastBrightnessValue != null) {
+                                brightnessSliderValue = lastBrightnessValue!;
+                              }
+                              if (lastHueValue != null) {
+                                hueSliderValue = lastHueValue!;
+                              }
+                              if (lastSaturationValue != null) {
+                                saturationSliderValue = lastSaturationValue!;
+                              }
+                              if (lastContrastValue != null) {
+                                contrastSliderValue = lastContrastValue!;
+                              }
+                              if (lastSepiaValue != null) {
+                                sepiaSliderValue = lastSepiaValue!;
+                              }
+                            });
+                          },
+                          child: _buildFilteredImage(
+                              _filter,
+                              originalImage ?? image,
+                              filename,
+                              brightnessSliderValue),
                         ),
                       ),
                     ),
-                    Expanded(
-                      flex: 1,
-                      child: Container(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                          children: [
-                            ...List.generate(
-                              bottomTabs.length,
-                              (index) => BottomTabWidgets(
-                                title: bottomTabs[index].title,
-                                isSelected: bottomTabs[index].isSelected,
-                                selectedColor: widget.appBarColor,
-                                onTap: () {
-                                  setState(() {
-                                    bottomTabs.forEach((element) {
-                                      element.isSelected = false;
-                                    });
-                                    bottomTabs[index].isSelected = true;
-                                    selectedBottom = bottomTabs[index];
-                                  });
-                                },
-                              ),
-                            )
-                          ],
-                        ),
-                      ),
-                    ),
-                    Expanded(
-                        flex: 2,
-                        child: selectedBottom.title == "Filter"
-                            ? ListView.builder(
-                                scrollDirection: Axis.horizontal,
-                                itemCount: widget.filters.length,
-                                itemBuilder: (BuildContext context, int index) {
-                                  return InkWell(
-                                    child: Container(
-                                      padding: EdgeInsets.all(5.0),
-                                      child: Column(
-                                        mainAxisAlignment:
-                                            MainAxisAlignment.start,
-                                        mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.center,
-                                        children: <Widget>[
-                                          _buildFilterThumbnail(
-                                              widget.filters[index],
-                                              originalImage ?? image,
-                                              filename,
-                                              _filter),
-                                          SizedBox(
-                                            height: 5.0,
-                                          ),
-                                          Text(
-                                            widget.filters[index].name,
-                                          )
-                                        ],
-                                      ),
-                                    ),
-                                    onTap: () => setState(() {
-                                      _filter = widget.filters[index];
-                                      lastSelectedfilter = _filter;
-                                    }),
-                                  );
-                                },
-                              )
-                            : SingleChildScrollView(
-                                padding: EdgeInsets.symmetric(horizontal: 10),
-                                child: Column(
-                                  children: [
-                                    Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.start,
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.spaceEvenly,
-                                      children: [
-                                        ...List.generate(
-                                            basicTools.length,
-                                            (index) => InkWell(
-                                                  onTap: () {
-                                                    if (index == 0) {
-                                                      setState(() {
-                                                        brightnessSliderValue =
-                                                            0.0;
-                                                        hueSliderValue = 0.0;
-                                                        saturationSliderValue =
-                                                            0.0;
-                                                        contrastSliderValue =
-                                                            0.0;
-                                                      });
-                                                    } else {
-                                                      setState(() {
-                                                        selectedBasicTool =
-                                                            basicTools[index];
-                                                      });
-                                                    }
-                                                  },
-                                                  child: BasicToolItem(
-                                                    data: basicTools[index],
-                                                    selectedItem:
-                                                        selectedBasicTool!,
-                                                    selectedColor:
-                                                        widget.appBarColor,
-                                                  ),
-                                                ))
-                                      ],
-                                    ),
-                                    SizedBox(height: 10),
-                                    getBasicSlider(selectedBasicTool!),
-                                    SizedBox(height: 10),
-                                  ],
-                                ),
-                              ))
                   ],
                 ),
+              ),
+        ),
+        bottomNavigationBar: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                ...List.generate(
+                  bottomTabs.length,
+                      (index) => BottomTabWidgets(
+                    title: bottomTabs[index].title,
+                    isSelected: bottomTabs[index].isSelected,
+                    selectedColor: widget.appBarColor,
+                    onTap: () {
+                      setState(() {
+                        bottomTabs.forEach((element) {
+                          element.isSelected = false;
+                        });
+                        bottomTabs[index].isSelected = true;
+                        selectedBottom = bottomTabs[index];
+                      });
+                    },
+                  ),
+                )
+              ],
+            ),
+            selectedBottom.title == "Filter"
+                ? SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  ...List.generate(widget.filters.length,
+                          (index) {
+                        return InkWell(
+                          child: Container(
+                            padding: EdgeInsets.all(5.0),
+                            child: Column(
+                              mainAxisAlignment:
+                              MainAxisAlignment.start,
+                              mainAxisSize: MainAxisSize.min,
+                              crossAxisAlignment:
+                              CrossAxisAlignment.center,
+                              children: <Widget>[
+                                _buildFilterThumbnail(
+                                  widget.filters[index],
+                                  originalImage ?? image,
+                                  filename,
+                                  _filter,
+                                ),
+                                SizedBox(
+                                  height: 5.0,
+                                ),
+                                Text(
+                                  widget.filters[index].name,
+                                )
+                              ],
+                            ),
+                          ),
+                          onTap: () => setState(() {
+                            _filter = widget.filters[index];
+                            lastSelectedfilter = _filter;
+                          }),
+                        );
+                      })
+                ],
+              ),
+            )
+                : SingleChildScrollView(
+              padding: EdgeInsets.symmetric(horizontal: 10),
+              child: Column(
+                children: [
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      crossAxisAlignment:
+                      CrossAxisAlignment.start,
+                      children: [
+                        ...List.generate(
+                            basicTools.length,
+                                (index) => InkWell(
+                              onTap: () {
+                                if (index == 0) {
+                                  setState(() {
+                                    brightnessSliderValue =
+                                    0.0;
+                                    hueSliderValue = 0.0;
+                                    saturationSliderValue =
+                                    0.0;
+                                    contrastSliderValue =
+                                    0.0;
+                                    sepiaSliderValue = 0.0;
+                                    lastBrightnessValue =
+                                    null;
+                                    lastSepiaValue = null;
+                                    lastContrastValue =
+                                    null;
+                                    lastHueValue = null;
+                                    lastSaturationValue =
+                                    null;
+                                  });
+                                } else {
+                                  setState(() {
+                                    selectedBasicTool =
+                                    basicTools[index];
+                                  });
+                                }
+                              },
+                              child: Container(
+                                margin: EdgeInsets.all(5),
+                                child: BasicToolItem(
+                                  data: basicTools[index],
+                                  selectedItem:
+                                  selectedBasicTool!,
+                                  selectedColor:
+                                  widget.appBarColor,
+                                ),
+                              ),
+                            ))
+                      ],
+                    ),
+                  ),
+                  SizedBox(height: 10),
+                  getBasicSlider(selectedBasicTool!),
+                  SizedBox(height: 10),
+                ],
+              ),
+            )
+          ],
         ),
       ),
     );
@@ -469,6 +482,29 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
           ),
         ],
       );
+    } else if (data.title == "Sepia") {
+      return Row(
+        children: [
+          Expanded(
+            child: CustomSlider(
+              sliderColor: widget.appBarColor,
+              child: Slider(
+                  max: 1.0,
+                  min: -1.0,
+                  divisions: 10,
+                  value: sepiaSliderValue,
+                  onChanged: (value) async {
+                    setState(() {
+                      if (value != sepiaSliderValue) {
+                        sepiaSliderValue = value;
+                        lastSepiaValue = sepiaSliderValue;
+                      }
+                    });
+                  }),
+            ),
+          ),
+        ],
+      );
     }
     return Container();
   }
@@ -506,6 +542,7 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
                     radius: 50.0,
                     backgroundImage: MemoryImage(
                       snapshot.data as dynamic,
+
                     ),
                     backgroundColor: Colors.white,
                   ),
@@ -629,14 +666,18 @@ class _PhotoFilterSelectorState extends State<PhotoFilterSelector> {
             )
           : RepaintBoundary(
               key: globalKey,
-              child: ImageFilter(
-                brightness: brightnessSliderValue,
-                hue: hueSliderValue,
-                saturation: saturationSliderValue,
-                contrast: contrastSliderValue,
-                child: Image.memory(
-                  cachedFilters[filter?.name ?? "_"] as dynamic,
-                  fit: widget.fit,
+              child: Container(
+                color: Colors.red,
+                child: ImageFilter(
+                  brightness: brightnessSliderValue,
+                  hue: hueSliderValue,
+                  saturation: saturationSliderValue,
+                  contrast: contrastSliderValue,
+                  sepia: sepiaSliderValue,
+                  child: Image.memory(
+                    cachedFilters[filter?.name ?? "_"] as dynamic,
+                    fit: widget.fit,
+                  ),
                 ),
               ),
             );
@@ -666,11 +707,12 @@ FutureOr<List<int>> buildThumbnail(Map<String, dynamic> params) {
   return applyFilter(params);
 }
 
-Widget ImageFilter({brightness, saturation, hue, child, contrast}) {
+Widget ImageFilter({brightness, saturation, hue, child, contrast, sepia}) {
   var bright = brightness.toStringAsFixed(1);
   var sat = saturation.toStringAsFixed(1);
   var hu = hue.toStringAsFixed(1);
   var cont = contrast.toStringAsFixed(1);
+  var sep = sepia.toStringAsFixed(1);
   return ColorFiltered(
       colorFilter: ColorFilter.matrix(
         ColorFilterAddons.brightness(double.parse(bright)),
@@ -684,7 +726,11 @@ Widget ImageFilter({brightness, saturation, hue, child, contrast}) {
             child: ColorFiltered(
               colorFilter: ColorFilter.matrix(
                   ColorFilterAddons.contrast(double.parse(cont))),
-              child: child,
+              child: ColorFiltered(
+                colorFilter: ColorFilter.matrix(
+                    ColorFilterAddons.sepia(double.parse(sep))),
+                child: child,
+              ),
             ),
           )));
 }

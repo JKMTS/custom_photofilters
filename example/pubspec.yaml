@@ -10,7 +10,7 @@ description: Demonstrates how to use the photofilters plugin.
 version: 1.0.0+1
 
 environment:
-  sdk: ">=2.2.2 <3.0.0"
+  sdk: ">=2.17.2 <3.0.0"
 
 dependencies:
   flutter:
@@ -26,6 +26,9 @@ dev_dependencies:
   image_picker:
   path_provider:
   colorfilter_generator: ^0.0.8
+  image_crop: ^0.4.1
+  wechat_assets_picker: ^8.3.0
+  provider: ^6.0.2
   photofilters:
     path: ../
 

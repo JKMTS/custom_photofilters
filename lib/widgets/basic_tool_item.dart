@@ -19,7 +19,7 @@ class BasicToolItem extends StatelessWidget {
     return Column(
       children: [
         CircleAvatar(
-          radius: 25,
+          radius: 22,
           backgroundColor: isSelected ? selectedColor : unselectedColor.withOpacity(.5),
           child: Icon(
             data.iconData,
